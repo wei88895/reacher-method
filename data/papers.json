@@ -7,7 +7,7 @@
     "pdf_url": "https://arxiv.org/pdf/2410.00300",
     "abstract": "提出基于幂分歧型测度的对应分析方法，用于可视化和评估双向列联表中对称性偏离。适用于对称方阵列联表分析。",
     "category": "统计分析与可视化",
-    "subcategory": "统计方法与可视化"
+    "subcategory": "统计方法与可视化",
     "image": "images/paper1.jpg"
   },
   {
@@ -18,7 +18,7 @@
     "pdf_url": "https://ieeexplore.ieee.org/document/9904838",
     "abstract": "提出结合改进pix2pix模型和复制粘贴操作符的数据增强策略，提升固废检测性能。",
     "category": "船舶目标检测",
-    "subcategory": "数据增强与生成模型"
+    "subcategory": "数据增强与生成模型",
     "image": "images/paper2.jpg"
   },
   {
@@ -29,7 +29,7 @@
     "pdf_url": "https://proceedings.mlr.press/v172/he22a/he22a.pdf",
     "abstract": "提出多任务学习框架JOINED，联合进行视盘/视杯分割和黄斑检测。",
     "category": "医学图像分析",
-    "subcategory": "多任务学习"
+    "subcategory": "多任务学习",
     "image": "images/paper3.jpg"
   },
   {
@@ -40,7 +40,7 @@
     "pdf_url": "https://www.researchgate.net/publication/388071531_Multi-Type_Ship_Target_Detection_in_Complex_Marine_Background_Based_on_YOLOv11",
     "abstract": "改进YOLOv11算法，通过EfficientNetv2和通道注意力机制提升复杂海洋背景下的船舶检测性能。",
     "category": "船舶目标检测",
-    "subcategory": "深度学习与目标检测"
+    "subcategory": "深度学习与目标检测",
     "image": "images/paper4.jpg"
   },
   {
@@ -51,7 +51,7 @@
     "pdf_url": "https://www.mdpi.com/2072-4292/14/27/12/pdf",
     "abstract": "提出结合四帧差分法和YOLOv11的动态船舶目标检测方法。",
     "category": "船舶目标检测",
-    "subcategory": "动态目标检测"
+    "subcategory": "动态目标检测",
     "image": "images/paper5.jpg"
   },
   {
@@ -62,7 +62,7 @@
     "pdf_url": "https://www.researchgate.net/publication/390636025_Research_on_Detection_Methods_for_Dynamic_Ship_Targets_in_Complex_Marine_Environment_From_Visible_Light_lmages",
     "abstract": "系统综述SAR图像船舶检测的深度学习方法与数据集。",
     "category": "船舶目标检测",
-    "subcategory": "综述与评估"
+    "subcategory": "综述与评估",
     "image": "images/paper6.jpg"
   },
   {
@@ -73,7 +73,7 @@
     "pdf_url": "https://link.springer.com/content/pdf/10.1007/s13735-023-00313-5.pdf",
     "abstract": "提出基于注意力空洞特征池化(AAFP)的语义分割方法，用于自动驾驶场景理解。",
     "category": "自动驾驶与交通场景",
-    "subcategory": "语义分割"
+    "subcategory": "语义分割",
     "image": "images/paper7.jpg"
   },
   {
@@ -84,7 +84,7 @@
     "pdf_url": "https://link.springer.com/article/10.1007/s41095-022-0319-z",
     "abstract": "提出JLDNet多任务网络，联合优化相机定位与目标检测。",
     "category": "自动驾驶与交通场景",
-    "subcategory": "多任务学习"
+    "subcategory": "多任务学习",
     "image": "images/paper8.jpg"
   },
   {
@@ -95,7 +95,7 @@
     "pdf_url": "https://github.com/cq100/ET-FSM",
     "abstract": "提出基于SAM的专家教师框架ET-FSM，提升航拍目标检测鲁棒性。",
     "category": "遥感图像分析",
-    "subcategory": "小目标检测"
+    "subcategory": "小目标检测",
     "image": "images/paper9.jpg"
   },
   {
@@ -106,7 +106,7 @@
     "pdf_url": "https://link.springer.com/content/pdf/10.1038/s41598-025-90518-x.pdf",
     "abstract": "提出FFTNet网络，结合CNN和Transformer实现高效语义分割。",
     "category": "遥感图像分析",
-    "subcategory": "特征融合"
+    "subcategory": "特征融合",
     "image": "images/paper10.jpg"
   }
 ]
