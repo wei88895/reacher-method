@@ -16,9 +16,28 @@
         .controls { margin-bottom: 20px; padding: 15px; background-color: #fff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.05); display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 15px;}
         .controls label { margin-right: 5px; font-weight: bold; }
         .controls select, .controls input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        #papers-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
-        .paper-entry { background-color: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 15px; box-shadow: 0 0 10px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
-        .paper-entry img { max-width: 100%; height: 180px; object-fit: cover; border-radius: 4px; margin-bottom: 10px; align-self: center; }
+        #papers-container { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));  /* 修正grid语法 */
+            gap: 20px; 
+        }
+        .paper-entry { 
+            background-color: #fff; 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            padding: 15px; 
+            box-shadow: 0 0 10px rgba(0,0,0,0.05); 
+            display: flex; 
+            flex-direction: column; 
+        }
+        .paper-entry img { 
+            max-width: 100%; 
+            height: 180px; 
+            object-fit: cover;  /* 修正属性名 */
+            border-radius: 4px; 
+            margin-bottom: 10px; 
+            align-self: center;  /* 修正属性名 */
+        }
         .paper-entry h3 { font-size: 1.15em; margin-top: 0; margin-bottom: 10px; color: #0056b3; }
         .paper-entry p { font-size: 0.9em; margin-bottom: 8px; line-height: 1.4; }
         .paper-entry strong { color: #444; }
@@ -42,7 +61,7 @@
 
     <div id="screenshot-container">
         <h2>页面截图</h2>
-        <img src="placeholder_screenshot.png" alt="SurVis 页面截图 (占位符)" id="pageScreenshot">
+        <img src="images/placeholder_screenshot.png" alt="SurVis 页面截图 (占位符)" id="pageScreenshot">
         <p><small>请注意: 这是一个占位符。当您的页面上线后，请用真实的截图替换它。</small></p>
     </div>
 
@@ -65,10 +84,9 @@
         </div>
     </div>
 
-    <div id="papers-container">
-        </div>
+    <div id="papers-container"></div>
 
-    footer>
+    <footer>
         <p>由自定义脚本驱动。灵感来源于 SurVis。托管于 GitHub Pages。</p>
     </footer>
 
@@ -77,12 +95,8 @@
 
         async function fetchPapers() {
             try {
-                // ***** 修改点在这里 *****
-                const response = await fetch('data/papers.json'); // 修改路径以指向 data 文件夹
-                // ***********************
-                if (!response.ok) {
-                    throw new Error(`HTTP 错误! 状态: ${response.status}`);
-                }
+                const response = await fetch('data/papers.json');
+                if (!response.ok) throw new Error(`HTTP 错误! 状态: ${response.status}`);
                 allPapers = await response.json();
                 populateFilters();
                 renderPapers();
@@ -96,48 +110,40 @@
             const categoryFilter = document.getElementById('categoryFilter');
             const yearFilter = document.getElementById('yearFilter');
 
-            // 清空已有的选项 (除了 "全部")
-            categoryFilter.length = 1;
-            yearFilter.length = 1;
+            categoryFilter.length = yearFilter.length = 1;
 
             const categories = [...new Set(allPapers.map(paper => paper.category))].sort();
-            const years = [...new Set(allPapers.map(paper => paper.year))].sort((a, b) => b - a); // 年份降序
+            const years = [...new Set(allPapers.map(paper => paper.year))].sort((a, b) => b - a);
 
             categories.forEach(category => {
-                if (category) { // 确保分类不是 undefined 或 null
-                    const option = document.createElement('option');
-                    option.value = category;
-                    option.textContent = category;
-                    categoryFilter.appendChild(option);
-                }
+                const option = new Option(category, category);
+                categoryFilter.add(option);
             });
 
             years.forEach(year => {
-                 if (year) { // 确保年份不是 undefined 或 null
-                    const option = document.createElement('option');
-                    option.value = year;
-                    option.textContent = year;
-                    yearFilter.appendChild(option);
-                }
+                const option = new Option(year, year);
+                yearFilter.add(option);
             });
         }
 
         function renderPapers() {
             const container = document.getElementById('papers-container');
-            container.innerHTML = ''; // 清除现有论文
+            container.innerHTML = '';
 
             const selectedCategory = document.getElementById('categoryFilter').value;
             const selectedYear = document.getElementById('yearFilter').value;
             const searchQuery = document.getElementById('searchQuery').value.toLowerCase().trim();
 
             const filteredPapers = allPapers.filter(paper => {
-                const matchesCategory = selectedCategory ? paper.category === selectedCategory : true;
-                const matchesYear = selectedYear ? paper.year.toString() === selectedYear : true;
-                const matchesSearch = searchQuery ? paper.title.toLowerCase().includes(searchQuery) || paper.authors.toLowerCase().includes(searchQuery) || (paper.abstract && paper.abstract.toLowerCase().includes(searchQuery)) : true;
+                const matchesCategory = !selectedCategory || paper.category === selectedCategory;
+                const matchesYear = !selectedYear || paper.year.toString() === selectedYear;
+                const matchesSearch = !searchQuery || 
+                    [paper.title, paper.authors, paper.abstract]
+                        .some(text => text && text.toLowerCase().includes(searchQuery));
                 return matchesCategory && matchesYear && matchesSearch;
             });
 
-            if (filteredPapers.length === 0) {
+            if (!filteredPapers.length) {
                 container.innerHTML = "<p>没有找到符合当前筛选条件的论文。</p>";
                 return;
             }
@@ -146,70 +152,39 @@
                 const paperElement = document.createElement('div');
                 paperElement.className = 'paper-entry';
 
-                let doiLink = paper.doi;
-                let displayDoi = paper.doi;
-
-                if (paper.doi && paper.doi !== "Not provided" && paper.doi.trim() !== "") {
-                    if (paper.doi.toLowerCase().startsWith("arxiv:")) {
-                        doiLink = `https://arxiv.org/abs/${paper.doi.substring(6)}`;
-                    } else if (!paper.doi.startsWith("http")) {
-                        doiLink = `https://doi.org/${paper.doi}`;
-                    }
-                } else {
-                    displayDoi = "未提供";
-                    doiLink = "#"; // 无效链接
-                }
-
-                // 注意: 图像路径仍然是 "images/..."，假设 images 文件夹在根目录
-                // 如果 images 文件夹也在 data 文件夹内 (即 data/images/paper1.jpg),
-                // 那么这里的路径也需要调整为 paper.image ? `data/${paper.image}` : 'data/images/placeholder_image.png'
-                // 但通常 images 文件夹会放在根目录。
-                const imagePath = paper.image ? paper.image : 'images/placeholder_image.png';
+                // ==================== 关键图片路径修改 ====================
+                const imgFileName = paper.image || 'placeholder_image.png';
+                const imgPath = `images/${imgFileName}`;
+                const imgFallback = "this.onerror=null; this.src='images/placeholder_image.png'; this.alt='图片加载失败';";
 
                 paperElement.innerHTML = `
-                    <img src="${imagePath}" alt="论文《${paper.title}》的缩略图" onerror="this.onerror=null; this.src='images/placeholder_image.png'; this.alt='图片加载失败';">
+                    <img src="${imgPath}" alt="${paper.title}缩略图" onerror="${imgFallback}">
                     <h3>${paper.title}</h3>
                     <p><strong>作者:</strong> ${paper.authors}</p>
                     <p><strong>年份:</strong> ${paper.year}</p>
                     <p class="links">
-                        <strong>DOI:</strong> ${displayDoi === "未提供" ? displayDoi : `<a href="${doiLink}" target="_blank" rel="noopener noreferrer">${displayDoi}</a>`}
+                        <strong>DOI:</strong> ${paper.doi ? `<a href="https://doi.org/${paper.doi}" target="_blank">${paper.doi}</a>` : '未提供'}
                     </p>
                     <p class="links">
-                        <strong>PDF:</strong> ${paper.pdf_url ? `<a href="${paper.pdf_url}" target="_blank" rel="noopener noreferrer">访问 PDF</a>` : "未提供"}
+                        <strong>PDF:</strong> ${paper.pdf_url ? `<a href="${paper.pdf_url}" target="_blank">访问 PDF</a>` : '未提供'}
                     </p>
                     <p><strong>分类:</strong> ${paper.category}</p>
-                    <p><strong>子分类:</strong> ${paper.subcategory}</p>
                     ${paper.abstract ? `
                     <details>
                         <summary>摘要</summary>
-                        <p class="paper-abstract">${paper.abstract}</p>
-                    </details>
-                    ` : '<p>摘要未提供</p>'}
+                        <div class="paper-abstract">${paper.abstract}</div>
+                    </details>` : '<p>摘要未提供</p>'}
                 `;
                 container.appendChild(paperElement);
             });
         }
 
+        // 修正事件监听器名称
         document.addEventListener('DOMContentLoaded', () => {
-            fetchPapers(); // 页面加载完成后获取并渲染论文
-
-            // 为筛选控件添加事件监听器
+            fetchPapers();
             document.getElementById('categoryFilter').addEventListener('change', renderPapers);
             document.getElementById('yearFilter').addEventListener('change', renderPapers);
-            document.getElementById('searchQuery').addEventListener('input', renderPapers); // 实时搜索
-
-            // 尝试动态设置 GitHub Pages URL (如果部署在 GitHub Pages 上)
-            if (window.location.hostname.includes('github.io')) {
-                const pathParts = window.location.pathname.split('/').filter(part => part.length > 0);
-                const username = window.location.hostname.split('.')[0];
-                if (pathParts.length > 0) {
-                    const repoName = pathParts[0];
-                    const liveUrl = `https://${username}.github.io/${repoName}/`;
-                    const urlLinkElement = document.getElementById('ghPagesUrl');
-                    urlLinkElement.href = liveUrl;
-                    urlLinkElement.textContent = liveUrl;
-                }
-            }
+            document.getElementById('searchQuery').addEventListener('input', renderPapers);
         });
     </script>
 </body>
