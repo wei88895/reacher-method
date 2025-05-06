@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>研究论文概览</title>
     <style>
+        /* 保持原有CSS样式不变 */
         body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
         header { text-align: center; margin-bottom: 30px; }
         header h1 { color: #333; }
@@ -16,28 +17,9 @@
         .controls { margin-bottom: 20px; padding: 15px; background-color: #fff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.05); display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 15px;}
         .controls label { margin-right: 5px; font-weight: bold; }
         .controls select, .controls input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        #papers-container { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));  /* 修正grid语法 */
-            gap: 20px; 
-        }
-        .paper-entry { 
-            background-color: #fff; 
-            border: 1px solid #ddd; 
-            border-radius: 8px; 
-            padding: 15px; 
-            box-shadow: 0 0 10px rgba(0,0,0,0.05); 
-            display: flex; 
-            flex-direction: column; 
-        }
-        .paper-entry img { 
-            max-width: 100%; 
-            height: 180px; 
-            object-fit: cover;  /* 修正属性名 */
-            border-radius: 4px; 
-            margin-bottom: 10px; 
-            align-self: center;  /* 修正属性名 */
-        }
+        #papers-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+        .paper-entry { background-color: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 15px; box-shadow: 0 0 10px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
+        .paper-entry img { max-width: 100%; height: 180px; object-fit: cover; border-radius: 4px; margin-bottom: 10px; align-self: center; }
         .paper-entry h3 { font-size: 1.15em; margin-top: 0; margin-bottom: 10px; color: #0056b3; }
         .paper-entry p { font-size: 0.9em; margin-bottom: 8px; line-height: 1.4; }
         .paper-entry strong { color: #444; }
@@ -60,7 +42,7 @@
     </div>
 
     <div id="screenshot-container">
-        <h2>页面截图</h2>
+        <h2>论文分类表</h2>
         <img src="images/paper11.png" alt="论文分类表" id="pageScreenshot">
     </div>
 
@@ -95,13 +77,23 @@
         async function fetchPapers() {
             try {
                 const response = await fetch('data/papers.json');
-                if (!response.ok) throw new Error(`HTTP 错误! 状态: ${response.status}`);
-                allPapers = await response.json();
+                if (!response.ok) throw new Error(`HTTP错误！状态码：${response.status}`);
+                const rawData = await response.json();
+                
+                // 数据清洗：移除图片路径前缀
+                allPapers = rawData.map(paper => ({
+                    ...paper,
+                    image: paper.image ? 
+                        paper.image.replace(/(^program\/|^pugh\/)/, '')  // 移除program/和pugh/前缀
+                        : null
+                }));
+                
                 populateFilters();
                 renderPapers();
             } catch (error) {
-                console.error("无法获取论文数据:", error);
-                document.getElementById('papers-container').innerHTML = '<p>加载论文数据时出错。请检查控制台以获取更多信息，并确保 `data/papers.json` 文件存在且路径正确。</p>';
+                console.error("数据加载失败：", error);
+                document.getElementById('papers-container').innerHTML = 
+                    '<p>加载数据失败，请检查控制台日志并确认以下文件存在：<br>data/papers.json</p>';
             }
         }
 
@@ -109,16 +101,26 @@
             const categoryFilter = document.getElementById('categoryFilter');
             const yearFilter = document.getElementById('yearFilter');
 
+            // 清空现有选项
             categoryFilter.length = yearFilter.length = 1;
 
-            const categories = [...new Set(allPapers.map(paper => paper.category))].sort();
-            const years = [...new Set(allPapers.map(paper => paper.year))].sort((a, b) => b - a);
+            // 生成有效分类选项
+            const categories = [...new Set(allPapers.map(p => p.category))]
+                .filter(Boolean)
+                .sort();
+            
+            // 生成有效年份选项（降序排列）
+            const years = [...new Set(allPapers.map(p => p.year))]
+                .filter(year => !isNaN(year))
+                .sort((a, b) => b - a);
 
-            categories.forEach(category => {
-                const option = new Option(category, category);
+            // 填充分类筛选器
+            categories.forEach(cat => {
+                const option = new Option(cat, cat);
                 categoryFilter.add(option);
             });
 
+            // 填充年份筛选器
             years.forEach(year => {
                 const option = new Option(year, year);
                 yearFilter.add(option);
@@ -129,61 +131,101 @@
             const container = document.getElementById('papers-container');
             container.innerHTML = '';
 
+            // 获取筛选条件
             const selectedCategory = document.getElementById('categoryFilter').value;
             const selectedYear = document.getElementById('yearFilter').value;
             const searchQuery = document.getElementById('searchQuery').value.toLowerCase().trim();
 
+            // 过滤论文
             const filteredPapers = allPapers.filter(paper => {
-                const matchesCategory = !selectedCategory || paper.category === selectedCategory;
-                const matchesYear = !selectedYear || paper.year.toString() === selectedYear;
-                const matchesSearch = !searchQuery || 
+                const matchCategory = !selectedCategory || paper.category === selectedCategory;
+                const matchYear = !selectedYear || paper.year == selectedYear;
+                const matchSearch = !searchQuery || 
                     [paper.title, paper.authors, paper.abstract]
                         .some(text => text && text.toLowerCase().includes(searchQuery));
-                return matchesCategory && matchesYear && matchesSearch;
+                return matchCategory && matchYear && matchSearch;
             });
 
+            // 处理空状态
             if (!filteredPapers.length) {
-                container.innerHTML = "<p>没有找到符合当前筛选条件的论文。</p>";
+                container.innerHTML = "<p>没有找到符合筛选条件的论文</p>";
                 return;
             }
 
+            // 渲染论文条目
             filteredPapers.forEach(paper => {
-                const paperElement = document.createElement('div');
-                paperElement.className = 'paper-entry';
+                const entry = document.createElement('div');
+                entry.className = 'paper-entry';
 
-                // ==================== 关键图片路径修改 ====================
-                const imgFileName = paper.image || 'placeholder_image.png';
-                const imgPath = `images/${imgFileName}`;
-                const imgFallback = "this.onerror=null; this.src='images/placeholder_image.png'; this.alt='图片加载失败';";
+                // ================ 图片路径核心逻辑 ================
+                const VALID_IMAGES = Array.from({length: 11}, (_, i) => `paper${i+1}.png`); // paper1到paper11
+                
+                // 获取图片文件名
+                let imgFile = paper.image ? 
+                    paper.image.split('/').pop()  // 取最后一部分防止路径问题
+                    : 'paper11.png';  // 默认图片
+                
+                // 验证图片有效性
+                if (!VALID_IMAGES.includes(imgFile)) {
+                    console.warn(`无效图片路径：${imgFile}，使用默认图片`);
+                    imgFile = 'paper11.png';
+                }
 
-                paperElement.innerHTML = `
-                    <img src="${imgPath}" alt="${paper.title}缩略图" onerror="${imgFallback}">
+                // 构建图片路径
+                const imgPath = `images/${imgFile}`;
+                const imgFallback = `this.onerror=null; this.src='images/paper11.png'; this.alt='图片加载失败';`;
+
+                // 生成条目HTML
+                entry.innerHTML = `
+                    <img src="${imgPath}" 
+                         alt="${paper.title}缩略图" 
+                         onerror="${imgFallback}">
                     <h3>${paper.title}</h3>
                     <p><strong>作者:</strong> ${paper.authors}</p>
                     <p><strong>年份:</strong> ${paper.year}</p>
                     <p class="links">
-                        <strong>DOI:</strong> ${paper.doi ? `<a href="https://doi.org/${paper.doi}" target="_blank">${paper.doi}</a>` : '未提供'}
+                        <strong>DOI:</strong> ${paper.doi ? 
+                            `<a href="https://doi.org/${paper.doi}" target="_blank" rel="noopener">${paper.doi}</a>` : 
+                            '未提供'}
                     </p>
                     <p class="links">
-                        <strong>PDF:</strong> ${paper.pdf_url ? `<a href="${paper.pdf_url}" target="_blank">访问 PDF</a>` : '未提供'}
+                        <strong>PDF:</strong> ${paper.pdf_url ? 
+                            `<a href="${paper.pdf_url}" target="_blank" rel="noopener">访问 PDF</a>` : 
+                            '未提供'}
                     </p>
                     <p><strong>分类:</strong> ${paper.category}</p>
                     ${paper.abstract ? `
                     <details>
                         <summary>摘要</summary>
                         <div class="paper-abstract">${paper.abstract}</div>
-                    </details>` : '<p>摘要未提供</p>'}
+                    </details>` : '<p>暂无摘要</p>'}
                 `;
-                container.appendChild(paperElement);
+
+                container.appendChild(entry);
             });
         }
 
-        // 修正事件监听器名称
+        // 初始化事件监听
         document.addEventListener('DOMContentLoaded', () => {
             fetchPapers();
-            document.getElementById('categoryFilter').addEventListener('change', renderPapers);
-            document.getElementById('yearFilter').addEventListener('change', renderPapers);
-            document.getElementById('searchQuery').addEventListener('input', renderPapers);
+            
+            // 动态筛选
+            ['change', 'input'].forEach(eventType => {
+                document.getElementById('categoryFilter').addEventListener(eventType, renderPapers);
+                document.getElementById('yearFilter').addEventListener(eventType, renderPapers);
+                document.getElementById('searchQuery').addEventListener(eventType, renderPapers);
+            });
+
+            // 自动生成GitHub Pages链接
+            if (window.location.hostname.endsWith('github.io')) {
+                const repoName = window.location.pathname.split('/')[1];
+                if (repoName) {
+                    const ghUrl = `https://${window.location.hostname}/${repoName}/`;
+                    const linkElement = document.getElementById('ghPagesUrl');
+                    linkElement.href = ghUrl;
+                    linkElement.textContent = ghUrl;
+                }
+            }
         });
     </script>
 </body>
