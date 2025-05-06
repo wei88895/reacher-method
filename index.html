@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>研究论文概览</title>
     <style>
-        /* 保持原有CSS样式不变 */
         body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
         header { text-align: center; margin-bottom: 30px; }
         header h1 { color: #333; }
@@ -80,11 +79,10 @@
                 if (!response.ok) throw new Error(`HTTP错误！状态码：${response.status}`);
                 const rawData = await response.json();
                 
-                // 数据清洗：移除图片路径前缀
                 allPapers = rawData.map(paper => ({
                     ...paper,
                     image: paper.image ? 
-                        paper.image.replace(/(^program\/|^pugh\/)/, '')  // 移除program/和pugh/前缀
+                        paper.image.replace(/(^program\/|^pugh\/)/, '')
                         : null
                 }));
                 
@@ -101,26 +99,21 @@
             const categoryFilter = document.getElementById('categoryFilter');
             const yearFilter = document.getElementById('yearFilter');
 
-            // 清空现有选项
             categoryFilter.length = yearFilter.length = 1;
 
-            // 生成有效分类选项
             const categories = [...new Set(allPapers.map(p => p.category))]
                 .filter(Boolean)
                 .sort();
             
-            // 生成有效年份选项（降序排列）
             const years = [...new Set(allPapers.map(p => p.year))]
                 .filter(year => !isNaN(year))
                 .sort((a, b) => b - a);
 
-            // 填充分类筛选器
             categories.forEach(cat => {
                 const option = new Option(cat, cat);
                 categoryFilter.add(option);
             });
 
-            // 填充年份筛选器
             years.forEach(year => {
                 const option = new Option(year, year);
                 yearFilter.add(option);
@@ -131,12 +124,10 @@
             const container = document.getElementById('papers-container');
             container.innerHTML = '';
 
-            // 获取筛选条件
             const selectedCategory = document.getElementById('categoryFilter').value;
             const selectedYear = document.getElementById('yearFilter').value;
             const searchQuery = document.getElementById('searchQuery').value.toLowerCase().trim();
 
-            // 过滤论文
             const filteredPapers = allPapers.filter(paper => {
                 const matchCategory = !selectedCategory || paper.category === selectedCategory;
                 const matchYear = !selectedYear || paper.year == selectedYear;
@@ -146,36 +137,35 @@
                 return matchCategory && matchYear && matchSearch;
             });
 
-            // 处理空状态
             if (!filteredPapers.length) {
                 container.innerHTML = "<p>没有找到符合筛选条件的论文</p>";
                 return;
             }
 
-            // 渲染论文条目
             filteredPapers.forEach(paper => {
                 const entry = document.createElement('div');
                 entry.className = 'paper-entry';
 
-                // ================ 图片路径核心逻辑 ================
-                const VALID_IMAGES = Array.from({length: 11}, (_, i) => `paper${i+1}.png`); // paper1到paper11
+                // 修改后的图片验证逻辑
+                const VALID_IMAGES = [
+                    'paper1.png', 'paper2.png', 'paper3.png',
+                    'paper4.png', 'paper5.png', 'paper6.png',
+                    'paper7.png', 'paper8.png', 'paper9.png',
+                    'paper10.png'
+                ];
                 
-                // 获取图片文件名
                 let imgFile = paper.image ? 
-                    paper.image.split('/').pop()  // 取最后一部分防止路径问题
-                    : 'paper11.png';  // 默认图片
-                
-                // 验证图片有效性
+                    paper.image.split('/').pop() : 
+                    'paper11.png';
+
                 if (!VALID_IMAGES.includes(imgFile)) {
                     console.warn(`无效图片路径：${imgFile}，使用默认图片`);
                     imgFile = 'paper11.png';
                 }
 
-                // 构建图片路径
                 const imgPath = `images/${imgFile}`;
                 const imgFallback = `this.onerror=null; this.src='images/paper11.png'; this.alt='图片加载失败';`;
 
-                // 生成条目HTML
                 entry.innerHTML = `
                     <img src="${imgPath}" 
                          alt="${paper.title}缩略图" 
@@ -185,7 +175,7 @@
                     <p><strong>年份:</strong> ${paper.year}</p>
                     <p class="links">
                         <strong>DOI:</strong> ${paper.doi ? 
-                            `<a href="https://doi.org/${paper.doi}" target="_blank" rel="noopener">${paper.doi}</a>` : 
+                            `<a href="https://doi/${paper.doi}" target="_blank" rel="noopener">${paper.doi}</a>` : 
                             '未提供'}
                     </p>
                     <p class="links">
@@ -205,18 +195,15 @@
             });
         }
 
-        // 初始化事件监听
         document.addEventListener('DOMContentLoaded', () => {
             fetchPapers();
             
-            // 动态筛选
             ['change', 'input'].forEach(eventType => {
                 document.getElementById('categoryFilter').addEventListener(eventType, renderPapers);
                 document.getElementById('yearFilter').addEventListener(eventType, renderPapers);
                 document.getElementById('searchQuery').addEventListener(eventType, renderPapers);
             });
 
-            // 自动生成GitHub Pages链接
             if (window.location.hostname.endsWith('github.io')) {
                 const repoName = window.location.pathname.split('/')[1];
                 if (repoName) {
