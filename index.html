@@ -68,7 +68,7 @@
     <div id="papers-container">
         </div>
 
-    <footer>
+    footer>
         <p>由自定义脚本驱动。灵感来源于 SurVis。托管于 GitHub Pages。</p>
     </footer>
 
@@ -77,8 +77,9 @@
 
         async function fetchPapers() {
             try {
-                // 确保 papers.json 与 index.html 在同一目录下，或者提供正确路径
-                const response = await fetch('data/papers.json');
+                // ***** 修改点在这里 *****
+                const response = await fetch('data/papers.json'); // 修改路径以指向 data 文件夹
+                // ***********************
                 if (!response.ok) {
                     throw new Error(`HTTP 错误! 状态: ${response.status}`);
                 }
@@ -87,7 +88,7 @@
                 renderPapers();
             } catch (error) {
                 console.error("无法获取论文数据:", error);
-                document.getElementById('papers-container').innerHTML = '<p>加载论文数据时出错。请检查控制台以获取更多信息，并确保 `papers.json` 文件存在且路径正确。</p>';
+                document.getElementById('papers-container').innerHTML = '<p>加载论文数据时出错。请检查控制台以获取更多信息，并确保 `data/papers.json` 文件存在且路径正确。</p>';
             }
         }
 
@@ -159,7 +160,11 @@
                     doiLink = "#"; // 无效链接
                 }
 
-                const imagePath = paper.image ? paper.image : 'images/placeholder_image.png'; // 默认图片路径
+                // 注意: 图像路径仍然是 "images/..."，假设 images 文件夹在根目录
+                // 如果 images 文件夹也在 data 文件夹内 (即 data/images/paper1.jpg),
+                // 那么这里的路径也需要调整为 paper.image ? `data/${paper.image}` : 'data/images/placeholder_image.png'
+                // 但通常 images 文件夹会放在根目录。
+                const imagePath = paper.image ? paper.image : 'images/placeholder_image.png';
 
                 paperElement.innerHTML = `
                     <img src="${imagePath}" alt="论文《${paper.title}》的缩略图" onerror="this.onerror=null; this.src='images/placeholder_image.png'; this.alt='图片加载失败';">
@@ -194,7 +199,6 @@
             document.getElementById('searchQuery').addEventListener('input', renderPapers); // 实时搜索
 
             // 尝试动态设置 GitHub Pages URL (如果部署在 GitHub Pages 上)
-            // 注意: 这依赖于标准的 GitHub Pages URL 结构
             if (window.location.hostname.includes('github.io')) {
                 const pathParts = window.location.pathname.split('/').filter(part => part.length > 0);
                 const username = window.location.hostname.split('.')[0];
