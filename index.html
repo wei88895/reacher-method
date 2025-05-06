@@ -78,7 +78,7 @@
         async function fetchPapers() {
             try {
                 // 确保 papers.json 与 index.html 在同一目录下，或者提供正确路径
-                const response = await fetch('papers.json');
+                const response = await fetch('data/papers.json');
                 if (!response.ok) {
                     throw new Error(`HTTP 错误! 状态: ${response.status}`);
                 }
